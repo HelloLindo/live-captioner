@@ -402,11 +402,18 @@ final class SnapView: NSView {
         if let id { ink(id, in: true) }
     }
 
+    /// A guess in an area being read again stays hidden under the shimmer,
+    /// whatever would show it: the read that follows shows it, or what replaces it.
+    private func rereading(_ id: Int) -> Bool {
+        guard !job.settled(id), let patch = patches.first(where: { $0.id == id }) else { return false }
+        return forcing.contains { Self.pixels($0, job.scale).intersects(patch.source) }
+    }
+
     /// Ink: the translation settles in out of a blur, or melts back into one.
     /// The blur is only there while it moves: on every translation showing,
     /// it was drawn again each frame anything moved, panning above all.
     private func ink(_ id: Int, in show: Bool) {
-        guard let layer = inks[id] else { return }
+        guard let layer = inks[id], !show || !rereading(id) else { return }
         if let mark = marks[id] { spring(mark, "opacity", to: show ? 0 : 1) }  // the translation takes its place
         if layer.filters == nil {  // settled in, sharp
             CATransaction.begin()
@@ -459,8 +466,14 @@ final class SnapView: NSView {
         let pixels = Self.pixels(area, job.scale)
         Task { @MainActor in
             let found = await job.force(pixels)
-            forcing.removeAll { $0 == area }
+            if let i = forcing.firstIndex(of: area) { forcing.remove(at: i) }  // just this read: another may be of the same area
             reshape()
+            guard !closing else { return }
+            // What waited on this read shows now: the guess, if it stands.
+            for patch in patches where patch.source.intersects(pixels)
+                && (pinned.contains(patch.id) || hovered == patch.id || strip.showAll) {
+                ink(patch.id, in: true)
+            }
             guard found == 0, !closing, !quiet else { return }
             NSSound.beep()
             let lens = CALayer()
@@ -510,9 +523,14 @@ final class SnapView: NSView {
             hovered = nil
             dragged.append(area)
             // What's translated there stays so; anything only guessed at, left
-            // untranslated or not found at all is read again, harder.
+            // untranslated or not found at all is read again, harder. A guess
+            // there shimmers meanwhile, even one already showing, then gives way
+            // to the better read, or shows after all if the read comes out the same.
+            if job.unsettled(Self.pixels(area, job.scale)) {
+                force(area, quiet: marks.values.contains { $0.frame.intersects(area) })
+                for id in patches.map(\.id) where rereading(id) { ink(id, in: false) }
+            }
             pin(in: area)
-            if job.unsettled(Self.pixels(area, job.scale)) { force(area, quiet: marks.values.contains { $0.frame.intersects(area) }) }
             return
         }
         guard pictureFrame.contains(point) else { return onDismiss() }
