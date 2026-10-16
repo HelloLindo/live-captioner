@@ -158,10 +158,20 @@ final class SnapJob {
     }
 
     /// Whether a drag over this area (pixels) should read it again: nothing
-    /// found there yet, or something only guessed at or left untranslated.
+    /// found there yet, or something only guessed at or left untranslated,
+    /// even given up on (its translation failed) beside lines that were translated.
     @MainActor func unsettled(_ area: CGRect) -> Bool {
-        let there = paragraphs.indices.filter { !dropped.contains($0) && paragraphs[$0].box.intersects(area) }
-        return there.isEmpty || there.contains { !held.contains($0) }
+        let live = paragraphs.indices.filter { !dropped.contains($0) }
+        // Given up on and not read again since: what replaced it covers most of it, not just a scrap.
+        let lost = dropped.contains { i in
+            // Sampled on a grid, as replacements may overlap one another.
+            let box = paragraphs[i].box
+            let points = (0..<64).map { CGPoint(x: box.minX + box.width * (CGFloat($0 % 8) + 0.5) / 8, y: box.minY + box.height * (CGFloat($0 / 8) + 0.5) / 8) }
+            let covered = points.filter { point in live.contains { paragraphs[$0].box.contains(point) } }.count
+            return box.intersects(area) && covered < points.count / 2
+        }
+        let there = live.filter { paragraphs[$0].box.intersects(area) }
+        return there.isEmpty || lost || there.contains { !held.contains($0) }
     }
 
     /// Whether this paragraph's translation stands: a forced read leaves it be.
@@ -175,11 +185,12 @@ final class SnapJob {
     @MainActor func force(_ area: CGRect) async -> Int {
         let image = image
         await reading?.value  // what the whole read finds isn't found twice
-        // Whatever it may replace is read whole, not just the lines dragged over.
+        // Whatever it may replace is read whole, not just the lines dragged
+        // over, and so is what was given up on there.
         let held = held
         var area = area, taken: Set<Int> = []
         while let i = paragraphs.indices.first(where: { i in
-            !taken.contains(i) && !dropped.contains(i) && !held.contains(i) && paragraphs[i].box.intersects(area)
+            !taken.contains(i) && !held.contains(i) && paragraphs[i].box.intersects(area)
         }) {
             taken.insert(i)
             area = area.union(paragraphs[i].box.insetBy(dx: -8, dy: -8))
