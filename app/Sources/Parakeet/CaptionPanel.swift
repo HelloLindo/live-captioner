@@ -21,6 +21,77 @@ enum CaptionFontSize {
     }
 }
 
+/// Visibility is separate from font size, so hiding a stream preserves its size.
+enum CaptionVisibility {
+    static let translatedKey = "captionTranslatedEnabled"
+    static let originalKey = "captionOriginalEnabled"
+
+    static func saved(forKey key: String) -> Bool {
+        (UserDefaults.standard.object(forKey: key) as? NSNumber)?.boolValue ?? true
+    }
+
+    static func key(forFontSizeKey key: String) -> String? {
+        switch key {
+        case CaptionFontSize.translatedKey: return translatedKey
+        case CaptionFontSize.originalKey: return originalKey
+        default: return nil
+        }
+    }
+}
+
+/// Kept alive by the app delegate because menu item targets are not retained.
+final class CaptionFontMenu: NSObject {
+    func makeMenu() -> NSMenu {
+        let menu = NSMenu()
+        for (title, key, fallback, visibilityKey) in [
+            (String(localized: "Translated Captions"), CaptionFontSize.translatedKey, CaptionFontSize.translatedDefault, CaptionVisibility.translatedKey),
+            (String(localized: "Original Captions"), CaptionFontSize.originalKey, CaptionFontSize.originalDefault, CaptionVisibility.originalKey),
+        ] {
+            let sizes = NSMenu()
+            let enabled = CaptionVisibility.saved(forKey: visibilityKey)
+            let disabled = sizes.addItem(withTitle: String(localized: "Disabled"), action: #selector(disableCaptions(_:)), keyEquivalent: "")
+            disabled.target = self
+            disabled.representedObject = visibilityKey
+            disabled.state = enabled ? .off : .on
+            sizes.addItem(.separator())
+            let selected = CaptionFontSize.saved(forKey: key, fallback: fallback)
+            for size in CaptionFontSize.choices {
+                let item = sizes.addItem(withTitle: "\(size) pt", action: #selector(changeFontSize(_:)), keyEquivalent: "")
+                item.target = self
+                item.tag = size
+                item.representedObject = key
+                item.state = enabled && Double(size) == selected ? .on : .off
+            }
+            menu.setSubmenu(sizes, for: menu.addItem(withTitle: title, action: nil, keyEquivalent: ""))
+        }
+        menu.addItem(.separator())
+        let reset = menu.addItem(withTitle: String(localized: "Reset Caption Settings"), action: #selector(resetSettings), keyEquivalent: "")
+        reset.target = self
+        return menu
+    }
+
+    @objc private func disableCaptions(_ item: NSMenuItem) {
+        guard let key = item.representedObject as? String,
+              [CaptionVisibility.translatedKey, CaptionVisibility.originalKey].contains(key) else { return }
+        UserDefaults.standard.set(false, forKey: key)
+    }
+
+    @objc private func changeFontSize(_ item: NSMenuItem) {
+        guard let key = item.representedObject as? String,
+              let visibilityKey = CaptionVisibility.key(forFontSizeKey: key),
+              CaptionFontSize.choices.contains(item.tag) else { return }
+        UserDefaults.standard.set(Double(item.tag), forKey: key)
+        UserDefaults.standard.set(true, forKey: visibilityKey)
+    }
+
+    @objc private func resetSettings() {
+        for key in [CaptionFontSize.translatedKey, CaptionFontSize.originalKey,
+                    CaptionVisibility.translatedKey, CaptionVisibility.originalKey] {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+    }
+}
+
 /// One continuous run of text per burst of speech. New characters type in
 /// a few at a time instead of popping in, so the eye can follow them.
 @Observable
@@ -221,6 +292,7 @@ final class CaptionPanel: NSPanel {
         hasShadow = false
         isMovableByWindowBackground = true
         hidesOnDeactivate = false
+        ignoresMouseEvents = true
 
         let screen = NSScreen.main?.visibleFrame ?? .init(x: 0, y: 0, width: 1440, height: 900)
         let width = min(900, screen.width * 0.7)
@@ -229,7 +301,8 @@ final class CaptionPanel: NSPanel {
         setFrameAutosaveName("Captions")  // remember where it was dragged to
 
         let host = NSHostingView(rootView: CaptionView(captions: captions, translator: translator, onClose: onClose, onCopy: onCopy,
-                                                     onHeightChange: { [weak self] in self?.resize(to: $0) }))
+                                                     onHeightChange: { [weak self] in self?.resize(to: $0) },
+                                                     onVisibilityChange: { [weak self] in self?.ignoresMouseEvents = !$0 }))
         host.sizingOptions = []
         contentView = host
     }
@@ -256,16 +329,20 @@ struct CaptionView: View {
     var onClose: (() -> Void)?
     var onCopy: (() -> Void)?
     var onHeightChange: ((CGFloat) -> Void)?
-    /// The fixed-height welcome preview stays compact at any saved size.
+    var onVisibilityChange: ((Bool) -> Void)?
+    /// The welcome preview stays compact and visible regardless of saved settings.
     var originalSizeOverride: CGFloat?
     @AppStorage(CaptionFontSize.translatedKey) private var translatedFontSize = CaptionFontSize.translatedDefault
     @AppStorage(CaptionFontSize.originalKey) private var originalFontSize = CaptionFontSize.originalDefault
+    @AppStorage(CaptionVisibility.translatedKey) private var translatedEnabled = true
+    @AppStorage(CaptionVisibility.originalKey) private var originalEnabled = true
     @State private var hovering = false
 
     private var translatedSize: CGFloat { CaptionFontSize.bounded(translatedFontSize, fallback: CaptionFontSize.translatedDefault) }
     private var originalSize: CGFloat { originalSizeOverride ?? CaptionFontSize.bounded(originalFontSize, fallback: CaptionFontSize.originalDefault) }
-    private var translation: Captions? { translator?.target == nil ? nil : translator?.output }
-    private var isEmpty: Bool { captions.isEmpty && translation?.isEmpty ?? true }
+    private var showOriginal: Bool { originalSizeOverride != nil || originalEnabled }
+    private var translation: Captions? { !translatedEnabled || translator?.target == nil ? nil : translator?.output }
+    private var isEmpty: Bool { !(showOriginal && !captions.isEmpty) && (translation?.isEmpty ?? true) }
     private var shown: Bool { !isEmpty && !(translation != nil && translator?.hearingNative == true) }
 
     var body: some View {
@@ -273,15 +350,14 @@ struct CaptionView: View {
             Spacer(minLength: 0)
             if shown {
                 HStack(alignment: .center, spacing: 14) {
-                    // Translating: the translation large on top, the original live below.
+                    // Disabled streams take no space; a single stream gets the full viewport.
                     VStack(spacing: 6) {
                         if let translation {
-                            CaptionText(captions: translation, size: translatedSize, lines: 2, opacity: 1)
+                            CaptionText(captions: translation, size: translatedSize, lines: showOriginal ? 2 : 3, opacity: 1)
                                 .id(translatedSize)
-                            CaptionText(captions: captions, size: originalSize, lines: 2, opacity: 0.7)
-                                .id(originalSize)
-                        } else {
-                            CaptionText(captions: captions, size: originalSize, lines: 3, opacity: 1)
+                        }
+                        if showOriginal {
+                            CaptionText(captions: captions, size: originalSize, lines: translation == nil ? 3 : 2, opacity: translation == nil ? 1 : 0.7)
                                 .id(originalSize)
                         }
                     }
@@ -326,6 +402,10 @@ struct CaptionView: View {
             }
         }
         .animation(.easeOut(duration: 0.3), value: shown)
+        .onChange(of: shown, initial: true) { _, visible in
+            if !visible { hovering = false }
+            onVisibilityChange?(visible)
+        }
         .translationTask(translator?.configuration) { session in await translator?.run(session) }
     }
 }

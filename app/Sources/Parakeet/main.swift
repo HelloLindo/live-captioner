@@ -39,6 +39,7 @@ enum EngineKind: String {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let captions = Captions()
     private let translator = Translator()
+    private let captionFontMenu = CaptionFontMenu()
     private lazy var panel = CaptionPanel(captions: captions, translator: translator,
                                           onClose: { [weak self] in self?.stopListening() },
                                           onCopy: { [weak self] in self?.copyTranscript() })
@@ -153,26 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.state = language?.minimalIdentifier == translator.target?.minimalIdentifier ? .on : .off
         }
         menu.setSubmenu(translate, for: menu.addItem(withTitle: String(localized: "Translate To"), action: nil, keyEquivalent: ""))
-        let fontSizes = NSMenu()
-        for (title, key, fallback) in [
-            (String(localized: "Translated Captions"), CaptionFontSize.translatedKey, CaptionFontSize.translatedDefault),
-            (String(localized: "Original Captions"), CaptionFontSize.originalKey, CaptionFontSize.originalDefault),
-        ] {
-            let sizes = NSMenu()
-            let selected = CaptionFontSize.saved(forKey: key, fallback: fallback)
-            for size in CaptionFontSize.choices {
-                let item = sizes.addItem(withTitle: "\(size) pt", action: #selector(changeCaptionFontSize(_:)), keyEquivalent: "")
-                item.target = self
-                item.tag = size
-                item.representedObject = key
-                item.state = Double(size) == selected ? .on : .off
-            }
-            fontSizes.setSubmenu(sizes, for: fontSizes.addItem(withTitle: title, action: nil, keyEquivalent: ""))
-        }
-        fontSizes.addItem(.separator())
-        let reset = fontSizes.addItem(withTitle: String(localized: "Reset Font Sizes"), action: #selector(resetCaptionFontSizes), keyEquivalent: "")
-        reset.target = self
-        menu.setSubmenu(fontSizes, for: menu.addItem(withTitle: String(localized: "Caption Font Size"), action: nil, keyEquivalent: ""))
+        menu.setSubmenu(captionFontMenu.makeMenu(), for: menu.addItem(withTitle: String(localized: "Caption Font Size"), action: nil, keyEquivalent: ""))
         let screen = menu.addItem(withTitle: String(localized: "Translate Screen"), action: #selector(SnapTranslate.start), keyEquivalent: "1")
         screen.keyEquivalentModifierMask = [.command, .shift]
         screen.target = snap
@@ -265,18 +247,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func translateTo(_ item: NSMenuItem) {
         translator.target = (item.representedObject as? String).map(Locale.Language.init(identifier:))
-    }
-
-    @objc private func changeCaptionFontSize(_ item: NSMenuItem) {
-        guard let key = item.representedObject as? String,
-              [CaptionFontSize.translatedKey, CaptionFontSize.originalKey].contains(key),
-              CaptionFontSize.choices.contains(item.tag) else { return }
-        UserDefaults.standard.set(Double(item.tag), forKey: key)
-    }
-
-    @objc private func resetCaptionFontSizes() {
-        UserDefaults.standard.removeObject(forKey: CaptionFontSize.translatedKey)
-        UserDefaults.standard.removeObject(forKey: CaptionFontSize.originalKey)
     }
 
     @objc private func openAudioSettings() { AudioPermission.openSettings() }

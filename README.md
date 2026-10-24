@@ -23,8 +23,8 @@ and adjustable caption fonts.*
 
 - Live captions for system audio, powered by Nemotron 3.5 ASR through FluidAudio.
 - Optional translation through Apple's on-device Translation framework.
-- Independent font sizes for translated and original captions, saved between
-  sessions. Compact defaults are **16 pt** and **12 pt**.
+- Independent font sizes and visibility for translated and original captions,
+  saved between sessions. Compact defaults are **16 pt** and **12 pt**.
 - A draggable floating panel with animated text and scrolling.
 - Screen text translation with ⇧⌘1, plus zoom and area selection.
 - Menu bar controls, transcript copying, and Open at Login.
@@ -90,19 +90,32 @@ Packaging uses macOS's built-in tools. The installer contains the app, an
 Applications shortcut, and installation instructions. Generated binaries stay
 in the ignored `build/` directory and are distributed as release downloads.
 
+To run the native caption settings regression checks in a logged-in macOS
+desktop session, use `scripts/test-caption-settings.sh` with the same Xcode
+selection as the build. Test output stays in `build/caption-tests/`.
+
 ## Using captions
 
 1. Play audio and enable **Captions** from the menu bar (⌘L).
 2. Drag the floating caption panel to your preferred position. Hover over it
    to turn captions off, copy the transcript, or select a translation language.
 3. Choose **Translate To** to show translated text above the original.
-   Speech already in the selected target language is hidden.
+   While translated captions are enabled, speech already in the selected
+   target language is hidden.
 4. Open **Caption Font Size** to adjust **Translated Captions** and
    **Original Captions** independently from **10–36 pt**. Settings apply
-   immediately and persist after quitting. **Reset Font Sizes** restores
-   16 pt and 12 pt. Original Captions also controls untranslated text.
+   immediately and persist after quitting. Choose **Disabled** in either
+   submenu to hide that stream, or select a font size to show it again.
+   **Reset Caption Settings** shows both streams and restores 16 pt and 12 pt.
+   Original Captions also controls untranslated text.
 5. Press **⇧⌘1** to translate text on screen. Pinch to zoom, drag an area
    to translate it again, and press Esc to dismiss.
+
+Disabled captions take no space in the panel. Disabling both hides the overlay;
+restore either stream through the menu bar. Hiding original captions also hides
+them when translation is off. Translation-only captions appear once a
+translation language is selected and translated text is available. These display
+settings do not stop recognition, translation, or transcript collection.
 
 Enable **Open at Login** from the menu bar to start the app when you sign in.
 Install updates manually from the [Releases page](https://github.com/HelloLindo/live-captioner/releases), or rebuild from source.

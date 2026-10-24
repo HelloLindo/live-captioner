@@ -11,7 +11,7 @@ Download LiveCaptioner.dmg, open it, and drag LiveCaptioner.app onto Application
 
 Captions appear in a draggable floating panel. The menu bar provides caption controls, transcript copying, translation language selection, and Open at Login. Translate Screen (Shift-Command-1) reads and translates text on screen.
 
-Caption Font Size controls translated and original captions independently from 10–36 pt, defaulting to 16 pt and 12 pt. Sizes persist after quitting and the panel adjusts its height. Original Captions also controls untranslated text.
+Caption Font Size controls translated and original captions independently from 10–36 pt, defaulting to 16 pt and 12 pt. Sizes persist after quitting and the panel adjusts its height. Choose Disabled in either submenu to hide that stream, or select a size to show it again. Reset Caption Settings restores both streams and the default sizes. Original Captions also controls untranslated text. With both disabled, the overlay is hidden and can be restored through the menu bar. Recognition, translation, and transcript collection continue while streams are hidden.
 
 The default speech engine is Nemotron 3.5 ASR via FluidAudio. Model and language-pack setup requires network downloads. System audio capture includes the system mix. Transcripts stay in session memory; Copy Transcript writes them to the clipboard. Screen translation needs Screen Recording permission.
 

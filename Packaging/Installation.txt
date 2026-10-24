@@ -17,7 +17,11 @@ Captions and translation run on your Mac. The initial setup needs an internet
 connection. Screen text translation separately needs Screen Recording permission.
 
 Use the menu bar's Caption Font Size controls to set translated and original
-captions independently. Defaults are 16 pt and 12 pt, and your choices are saved.
+captions independently. Choose Disabled in either submenu to hide that stream,
+or pick a size to show it again. Reset Caption Settings restores both streams
+and the default 16 pt and 12 pt sizes. Your choices are saved. When both are
+disabled, restore a stream through the menu bar. Hiding captions does not stop
+recognition, translation, or transcript collection.
 
 Quit any other running copy before opening this one. To update later, quit
 Live Captioner and replace the app in Applications with the newer download.
