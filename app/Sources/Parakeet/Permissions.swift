@@ -3,7 +3,7 @@ import PermissionFlow
 
 /// Screen Recording, for ⇧⌘1: the welcome window and ⇧⌘1 itself open
 /// System Settings at the right list with PermissionFlow's floating panel
-/// beside it, to drag Parakeet into. No system prompt on top of it.
+/// beside it, to drag Live Captioner into. No system prompt on top of it.
 @MainActor
 enum ScreenRecording {
     static let controller = PermissionFlow.makeController(configuration: .init(requiredAppURLs: [Bundle.main.bundleURL]))
@@ -13,8 +13,8 @@ enum ScreenRecording {
         controller.authorize(pane: .screenRecording, sourceFrameInScreen: CGRect(x: mouse.x - 16, y: mouse.y - 16, width: 32, height: 32))
     }
 
-    /// Whether Parakeet may capture the screen right now. Asked of a fresh
-    /// copy of Parakeet: a running app keeps its first answer, so a grant
+    /// Whether Live Captioner may capture the screen right now. Asked of a fresh
+    /// copy of Live Captioner: a running app keeps its first answer, so a grant
     /// made in System Settings meanwhile never shows up in-process. Blocks
     /// for the child's run (tens of milliseconds); keep it off the main thread.
     nonisolated static var allowed: Bool {

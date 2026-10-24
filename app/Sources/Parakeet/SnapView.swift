@@ -9,7 +9,7 @@ import SwiftUI
 final class SnapPanel: NSPanel {
     private let view: SnapView
     private let onClose: () -> Void
-    /// Pinches only go to the app in front, so Parakeet comes forward while
+    /// Pinches only go to the app in front, so Live Captioner comes forward while
     /// the picture is up and hands back to this one when it closes.
     private let previous = NSWorkspace.shared.frontmostApplication
     private var reclaim: NSObjectProtocol?

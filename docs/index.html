@@ -1,21 +1,17 @@
 <!doctype html>
-<!-- Parakeet's homepage. GitHub Pages serves this folder at parakeet.lost.plus,
-     which also hosts the Sparkle update feed (appcast.xml). -->
+<!-- Static project page. Configure GitHub Pages separately; no custom domain or updater. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Parakeet: live captions for your Mac</title>
-<meta name="description" content="Live captions and translation for everything your Mac plays. On-device, about 30 languages, extremely low-power.">
-<link rel="canonical" href="https://parakeet.lost.plus/">
-<link rel="alternate" type="text/markdown" href="https://parakeet.lost.plus/llms.txt" title="Parakeet, for language models">
+<title>Live Captioner: live captions for your Mac</title>
+<meta name="description" content="Live captions and translation for everything your Mac plays. On-device processing, independent caption font sizes, macOS 15+.">
+<link rel="alternate" type="text/markdown" href="llms.txt" title="Live Captioner, for language models">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Parakeet">
-<meta property="og:title" content="Parakeet">
-<meta property="og:description" content="Live captions and translation for everything your Mac plays. On-device, about 30 languages, extremely low-power.">
-<meta property="og:image" content="https://parakeet.lost.plus/screenshot.jpg">
-<meta property="og:url" content="https://parakeet.lost.plus/">
-<meta property="og:image:alt" content="Parakeet captioning a video in QuickTime Player and translating it into Korean">
+<meta property="og:site_name" content="Live Captioner">
+<meta property="og:title" content="Live Captioner">
+<meta property="og:description" content="Live captions and translation for everything your Mac plays. On-device processing, independent caption font sizes, macOS 15+.">
+<meta property="og:image:alt" content="Upstream Parakeet demo: captioning a video in QuickTime Player and translating it into Korean">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a7a4c">
 <link rel="icon" href="favicon.png">
@@ -24,22 +20,20 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Parakeet",
-  "description": "Live captions and translation for everything your Mac plays: videos, calls, podcasts. Speech recognition runs entirely on the Neural Engine, in about 30 languages, and nothing leaves the Mac.",
-  "url": "https://parakeet.lost.plus/",
-  "downloadUrl": "https://github.com/LPFchan/parakeet/releases/latest/download/Parakeet.dmg",
-  "image": "https://parakeet.lost.plus/icon.png",
-  "screenshot": "https://parakeet.lost.plus/screenshot.jpg",
+  "name": "Live Captioner",
+  "description": "On-device live captions and translation for macOS, with independently adjustable caption fonts.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "macOS 15 or later, Apple silicon",
   "isAccessibleForFree": true,
-  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://opensource.org/licenses/MIT",
-  "codeRepository": "https://github.com/LPFchan/parakeet",
-  "author": { "@type": "Person", "name": "LPFchan", "url": "https://github.com/LPFchan" }
+  "codeRepository": "https://github.com/HelloLindo/live-captioner",
+  "isBasedOn": {
+    "@type": "SoftwareApplication",
+    "name": "Parakeet",
+    "url": "https://github.com/LPFchan/parakeet"
+  }
 }
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
   :root {
     color-scheme: dark;
@@ -186,23 +180,23 @@
 <main>
   <section class="hero">
     <img src="icon.png" alt="" width="112" height="112">
-    <h1>Parakeet</h1>
+    <h1>Live Captioner</h1>
     <p class="tagline">Live captions for everything your Mac plays: videos, calls, podcasts. Translated as you listen, and all on your Mac.</p>
     <div class="actions">
-      <a class="button" href="https://github.com/LPFchan/parakeet/releases/latest/download/Parakeet.dmg">Download for Mac</a>
-      <a class="button outline" href="https://github.com/LPFchan/parakeet">
+      <a class="button" href="https://github.com/HelloLindo/live-captioner#build-and-run">Build for Mac</a>
+      <a class="button outline" href="https://github.com/HelloLindo/live-captioner">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         GitHub
       </a>
     </div>
-    <p class="meta">Free and open source · Apple silicon, macOS 15 or later</p>
+    <p class="meta">Independent Parakeet fork · Apple silicon, macOS 15 or later</p>
   </section>
 
   <figure class="demo">
     <div class="player">
       <video class="shot" src="demo.mp4" poster="demo.jpg" width="1920" height="1080"
              autoplay muted loop playsinline
-             aria-label="Parakeet captioning a video of Osaka in QuickTime Player and translating it into Korean. ⇧⌘1 shrinks the screen into a picture; pinching zooms in on a Japanese sign, dragging over it translates it into Korean, and Esc puts the screen back."></video>
+             aria-label="Upstream Parakeet demo: captioning a video of Osaka in QuickTime Player and translating it into Korean. ⇧⌘1 shrinks the screen into a picture; pinching zooms in on a Japanese sign, dragging over it translates it into Korean, and Esc puts the screen back."></video>
       <button class="playback" type="button" aria-label="Pause the demo">
         <svg class="bars" viewBox="0 0 14 14"><rect x="2.5" y="1.5" width="3" height="11" rx="1"/><rect x="8.5" y="1.5" width="3" height="11" rx="1"/></svg>
         <svg class="play" viewBox="0 0 14 14"><path d="M3.5 1.8v10.4a.8.8 0 0 0 1.2.7l8.4-5.2a.8.8 0 0 0 0-1.4L4.7 1.1a.8.8 0 0 0-1.2.7z"/></svg>
@@ -220,6 +214,7 @@
       </div>
       <div class="key-group"><kbd>esc</kbd><span>Back to the screen</span></div>
     </div>
+    <figcaption>Inherited Parakeet demo; it does not show Live Captioner branding or font controls.</figcaption>
   </figure>
 
   <h2>What it does</h2>
@@ -238,31 +233,31 @@
     </li>
     <li>
       <h3>Stays on your Mac</h3>
-      <p>Speech recognition and translation both run on your Mac. No audio or text ever leaves it.</p>
+      <p>The current app processes speech and translation locally. Setup downloads models and language packs.</p>
     </li>
     <li>
-      <h3>Barely uses power</h3>
-      <p>Runs entirely on the Neural Engine: about 0.12 W and a tenth of one CPU core while captioning, and about 1 mW when nothing is playing.</p>
+      <h3>Adjustable caption fonts</h3>
+      <p>Set translated and original captions independently from 10–36 pt in the menu bar. Compact defaults are 16 pt and 12 pt; settings persist after quitting.</p>
     </li>
     <li>
       <h3>Out of the way</h3>
-      <p>Lives in the menu bar. Toggle captions with ⌘L or from a terminal, and it updates itself.</p>
+      <p>Lives in the menu bar. Toggle captions with ⌘L or from a terminal. This fork uses manual updates and its own app identity.</p>
     </li>
   </ul>
 
   <h2>First launch</h2>
   <ol class="steps">
-    <li>Open <code>Parakeet.dmg</code> and drag Parakeet into Applications.</li>
-    <li>Parakeet isn't notarized by Apple, so macOS blocks the first launch. Go to System Settings → Privacy &amp; Security and click <strong>Open Anyway</strong>.</li>
+    <li>Follow the repository build instructions, then run <code>scripts/run-local.sh</code> to open <code>build/LiveCaptioner.app</code>.</li>
+    <li>Local Live Captioner builds are not notarized by Apple, so macOS may block the first launch. Go to System Settings → Privacy &amp; Security and click <strong>Open Anyway</strong>.</li>
     <li>The welcome window asks for permission to hear system audio, then downloads the speech model (about 640 MB).</li>
   </ol>
 </main>
 
 <footer>
-  <a href="https://github.com/LPFchan/parakeet">GitHub</a>
-  <a href="https://github.com/LPFchan/parakeet/releases">Releases</a>
-  <a href="https://github.com/LPFchan/parakeet/blob/main/LICENSE">MIT License</a>
-  <p class="credits">Speech recognition by NVIDIA's <a href="https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b">Nemotron 3.5 ASR</a> via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a>. Updates by <a href="https://sparkle-project.org">Sparkle</a>. Demo video from <a href="https://youtu.be/gNhBfh8_DoI">Osaka Food Tour 2026</a> by Nomad Journal (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY</a>).</p>
+  <a href="https://github.com/HelloLindo/live-captioner">GitHub</a>
+  <a href="https://github.com/HelloLindo/live-captioner#using-captions">User guide</a>
+  <a href="https://github.com/HelloLindo/live-captioner/blob/main/LICENSE">MIT License</a>
+  <p class="credits">Speech recognition by NVIDIA's <a href="https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b">Nemotron 3.5 ASR</a> via <a href="https://github.com/FluidInference/FluidAudio">FluidAudio</a>. Based on <a href="https://github.com/LPFchan/parakeet">Parakeet by LPFchan</a>. Demo video from <a href="https://youtu.be/gNhBfh8_DoI">Osaka Food Tour 2026</a> by Nomad Journal (<a href="https://creativecommons.org/licenses/by/3.0/">CC BY</a>).</p>
 </footer>
 <script src="demo.js" defer></script>
 </body>

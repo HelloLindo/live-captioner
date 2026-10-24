@@ -3,6 +3,24 @@ import NaturalLanguage
 import SwiftUI
 import Translation
 
+/// Shared by the menu bar controls and the live caption view.
+enum CaptionFontSize {
+    static let translatedKey = "captionTranslatedFontSize"
+    static let originalKey = "captionOriginalFontSize"
+    static let translatedDefault = 16.0
+    static let originalDefault = 12.0
+    static let choices = Array(stride(from: 10, through: 36, by: 2))
+
+    static func bounded(_ value: Double, fallback: Double) -> Double {
+        value.isFinite ? min(36, max(10, value)) : fallback
+    }
+
+    static func saved(forKey key: String, fallback: Double) -> Double {
+        guard let value = UserDefaults.standard.object(forKey: key) as? NSNumber else { return fallback }
+        return bounded(value.doubleValue, fallback: fallback)
+    }
+}
+
 /// One continuous run of text per burst of speech. New characters type in
 /// a few at a time instead of popping in, so the eye can follow them.
 @Observable
@@ -210,9 +228,22 @@ final class CaptionPanel: NSPanel {
         setFrame(.init(x: screen.midX - width / 2, y: screen.minY + 60, width: width, height: height), display: false)
         setFrameAutosaveName("Captions")  // remember where it was dragged to
 
-        let host = NSHostingView(rootView: CaptionView(captions: captions, translator: translator, onClose: onClose, onCopy: onCopy))
+        let host = NSHostingView(rootView: CaptionView(captions: captions, translator: translator, onClose: onClose, onCopy: onCopy,
+                                                     onHeightChange: { [weak self] in self?.resize(to: $0) }))
         host.sizingOptions = []
         contentView = host
+    }
+
+    private func resize(to height: CGFloat) {
+        guard height.isFinite, height > 0 else { return }
+        var next = frame
+        next.size.height = ceil(height)
+        // Keep the bottom edge where the user dragged it, moving down only
+        // when a larger font would otherwise put the top off screen.
+        if let visible = screen?.visibleFrame {
+            next.origin.y = max(visible.minY, min(next.origin.y, visible.maxY - next.height))
+        }
+        if next != frame { setFrame(next, display: true) }
     }
 
     override var canBecomeKey: Bool { false }
@@ -224,24 +255,34 @@ struct CaptionView: View {
     /// The buttons show only when both are given (not in the welcome window's preview).
     var onClose: (() -> Void)?
     var onCopy: (() -> Void)?
+    var onHeightChange: ((CGFloat) -> Void)?
+    /// The fixed-height welcome preview stays compact at any saved size.
+    var originalSizeOverride: CGFloat?
+    @AppStorage(CaptionFontSize.translatedKey) private var translatedFontSize = CaptionFontSize.translatedDefault
+    @AppStorage(CaptionFontSize.originalKey) private var originalFontSize = CaptionFontSize.originalDefault
     @State private var hovering = false
 
+    private var translatedSize: CGFloat { CaptionFontSize.bounded(translatedFontSize, fallback: CaptionFontSize.translatedDefault) }
+    private var originalSize: CGFloat { originalSizeOverride ?? CaptionFontSize.bounded(originalFontSize, fallback: CaptionFontSize.originalDefault) }
     private var translation: Captions? { translator?.target == nil ? nil : translator?.output }
     private var isEmpty: Bool { captions.isEmpty && translation?.isEmpty ?? true }
     private var shown: Bool { !isEmpty && !(translation != nil && translator?.hearingNative == true) }
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             Spacer(minLength: 0)
             if shown {
                 HStack(alignment: .center, spacing: 14) {
                     // Translating: the translation large on top, the original live below.
                     VStack(spacing: 6) {
                         if let translation {
-                            CaptionText(captions: translation, size: 22, lines: 2, opacity: 1)
-                            CaptionText(captions: captions, size: 15, lines: 2, opacity: 0.7)
+                            CaptionText(captions: translation, size: translatedSize, lines: 2, opacity: 1)
+                                .id(translatedSize)
+                            CaptionText(captions: captions, size: originalSize, lines: 2, opacity: 0.7)
+                                .id(originalSize)
                         } else {
-                            CaptionText(captions: captions, size: 22, lines: 3, opacity: 1)
+                            CaptionText(captions: captions, size: originalSize, lines: 3, opacity: 1)
+                                .id(originalSize)
                         }
                     }
                     if let onClose, let onCopy, let translator {
@@ -275,6 +316,12 @@ struct CaptionView: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
                 .background(.black.opacity(0.72), in: .rect(cornerRadius: 14))
+                // Ask for the natural height even before the AppKit panel has
+                // grown to fit it. Only the text's scrolling viewport clips.
+                .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
+                    onHeightChange?(height)
+                }
                 .transition(.opacity)
             }
         }
@@ -291,7 +338,10 @@ private struct CaptionText: View {
     let lines: CGFloat
     let opacity: Double
     @State private var lift: CGFloat = 0
-    private var lineHeight: CGFloat { (size * 1.19).rounded() }  // SF and Korean; CJK sets tighter
+    private static let layoutManager = NSLayoutManager()
+    private var lineHeight: CGFloat {
+        ceil(Self.layoutManager.defaultLineHeight(for: .systemFont(ofSize: size, weight: .semibold)))
+    }
     private var fade: CGFloat { (lineHeight * 0.3).rounded() }
 
     var body: some View {

@@ -51,7 +51,7 @@ final class SnapTranslate: NSObject {
     }
 
     /// Without Screen Recording, System Settings opens at the list with
-    /// PermissionFlow's panel beside it, to drag Parakeet into.
+    /// PermissionFlow's panel beside it, to drag Live Captioner into.
     /// The running app's own answer never changes, so a grant made since it
     /// started (without reopening it) is checked with a fresh copy.
     @MainActor static func canCapture() -> Bool {
@@ -60,7 +60,7 @@ final class SnapTranslate: NSObject {
         return false
     }
 
-    /// The screen as it looks under Parakeet's own windows (the caption box included).
+    /// The screen as it looks under Live Captioner's own windows (the caption box included).
     private static func capture(_ screen: NSScreen) async throws -> CGImage {
         let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as! CGDirectDisplayID
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
