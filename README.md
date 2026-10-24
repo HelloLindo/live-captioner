@@ -10,7 +10,8 @@ the original version that makes this project possible.
 
 **Apple silicon · macOS 15 or later · Free and open source**
 
-[Build and run](#build-and-run) · [Using captions](#using-captions) ·
+[Download for Mac](https://github.com/HelloLindo/live-captioner/releases/latest/download/LiveCaptioner.dmg) ·
+[Install](#install) · [Using captions](#using-captions) ·
 [Source](https://github.com/HelloLindo/live-captioner)
 
 ![Upstream demo showing captions and Korean translation in QuickTime Player](docs/screenshot.jpg)
@@ -27,6 +28,23 @@ and adjustable caption fonts.*
 - A draggable floating panel with animated text and scrolling.
 - Screen text translation with ⇧⌘1, plus zoom and area selection.
 - Menu bar controls, transcript copying, and Open at Login.
+
+## Install
+
+1. [Download LiveCaptioner.dmg](https://github.com/HelloLindo/live-captioner/releases/latest/download/LiveCaptioner.dmg).
+2. Open the disk image and drag **LiveCaptioner.app** onto **Applications**.
+3. Eject the disk image and open **Live Captioner** from Applications.
+4. Follow the welcome screen to allow system audio capture and set up the
+   speech model (about 640 MB). Translation languages download as needed.
+
+This release is **ad-hoc signed and not notarized by Apple**. If macOS blocks
+it and you trust this download, try opening it once, then use System Settings →
+Privacy & Security → **Open Anyway**. See [Apple's instructions](https://support.apple.com/102445).
+Screen translation separately requires Screen Recording permission.
+
+[All releases](https://github.com/HelloLindo/live-captioner/releases) include a
+SHA-256 checksum file. Updates are manual: quit Live Captioner, download the
+newer disk image, and replace the app in Applications.
 
 ## Build and run
 
@@ -62,6 +80,16 @@ as needed. Screen translation separately requires Screen Recording permission.
 Live Captioner can coexist with Parakeet and has its own preferences and
 permissions. Quit any other captioning copy before using it.
 
+To package a source build as a disk image:
+
+```sh
+scripts/make-dmg.sh           # build/LiveCaptioner.dmg and its SHA-256 checksum
+```
+
+Packaging uses macOS's built-in tools. The installer contains the app, an
+Applications shortcut, and installation instructions. Generated binaries stay
+in the ignored `build/` directory and are distributed as release downloads.
+
 ## Using captions
 
 1. Play audio and enable **Captions** from the menu bar (⌘L).
@@ -77,7 +105,7 @@ permissions. Quit any other captioning copy before using it.
    to translate it again, and press Esc to dismiss.
 
 Enable **Open at Login** from the menu bar to start the app when you sign in.
-Updates are installed manually by rebuilding from the version you want to use.
+Install updates manually from the [Releases page](https://github.com/HelloLindo/live-captioner/releases), or rebuild from source.
 
 You can also control a running copy from Terminal:
 

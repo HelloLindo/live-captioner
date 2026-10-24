@@ -4,7 +4,8 @@
 # Uses SIGN_IDENTITY, an available Developer ID, or ad-hoc signing.
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
-app="$root/build/LiveCaptioner.app"
+build_dir=${BUILD_DIR:-"$root/build"}
+app="$build_dir/LiveCaptioner.app"
 version=${FORK_VERSION:-0.1.0}
 build=$(git -C "$root" rev-list --count HEAD)
 identities=$(security find-identity -p codesigning)

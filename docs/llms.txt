@@ -2,11 +2,12 @@
 
 > Live captions and optional translation for audio played on Apple silicon Macs with macOS 15 or later. Speech recognition and Apple Translation run on the Mac.
 
+- Download for Mac: https://github.com/HelloLindo/live-captioner/releases/latest/download/LiveCaptioner.dmg
 - Source, build instructions, and user guide: https://github.com/HelloLindo/live-captioner
 - License: https://github.com/HelloLindo/live-captioner/blob/main/LICENSE
 - Based on Parakeet by LPFchan: https://github.com/LPFchan/parakeet
 
-Build with full Xcode 26 or later using scripts/build-app.sh, then launch with scripts/run-local.sh. Output: build/LiveCaptioner.app. Updates are installed manually.
+Download LiveCaptioner.dmg, open it, and drag LiveCaptioner.app onto Applications. Eject the disk image and open the app from Applications. The release is ad-hoc signed and not notarized by Apple; if macOS blocks it and you trust the download, follow Apple’s Open Anyway instructions at https://support.apple.com/102445. Updates are installed manually. Source builds require full Xcode 26 or later: scripts/build-app.sh, then scripts/run-local.sh. scripts/make-dmg.sh packages the app with macOS tools and writes a SHA-256 checksum.
 
 Captions appear in a draggable floating panel. The menu bar provides caption controls, transcript copying, translation language selection, and Open at Login. Translate Screen (Shift-Command-1) reads and translates text on screen.
 

@@ -1,0 +1,29 @@
+Live Captioner
+=============
+
+Requires an Apple silicon Mac running macOS 15 or later.
+
+1. Drag LiveCaptioner.app onto the Applications shortcut in this disk image.
+2. Eject the disk image, then open Live Captioner from Applications.
+3. Follow the welcome screen to allow system audio capture and set up the
+   speech model (about 640 MB). Translation languages download as needed.
+
+This release is ad-hoc signed and is not notarized by Apple. If macOS blocks
+the app and you trust this download, open System Settings > Privacy & Security
+and choose Open Anyway after attempting to launch it.
+Apple's instructions: https://support.apple.com/102445
+
+Captions and translation run on your Mac. The initial setup needs an internet
+connection. Screen text translation separately needs Screen Recording permission.
+
+Use the menu bar's Caption Font Size controls to set translated and original
+captions independently. Defaults are 16 pt and 12 pt, and your choices are saved.
+
+Quit any other running copy before opening this one. To update later, quit
+Live Captioner and replace the app in Applications with the newer download.
+The app does not update automatically.
+
+Source and downloads: https://github.com/HelloLindo/live-captioner
+Based on Parakeet by LPFchan: https://github.com/LPFchan/parakeet
+Thank you to the original authors and contributors. License notices are in
+LiveCaptioner.app/Contents/Resources/Licenses.
