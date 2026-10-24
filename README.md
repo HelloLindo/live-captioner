@@ -4,6 +4,10 @@ Live captions and translation for everything your Mac plays: videos, calls,
 and podcasts. Speech recognition and translation run on your Mac, with captions
 in a floating panel you can move anywhere.
 
+Live Captioner is a fork of [Parakeet](https://github.com/LPFchan/parakeet).
+Thank you to LPFchan and the Parakeet contributors for creating and sharing
+the original version that makes this project possible.
+
 **Apple silicon · macOS 15 or later · Free and open source**
 
 [Build and run](#build-and-run) · [Using captions](#using-captions) ·
