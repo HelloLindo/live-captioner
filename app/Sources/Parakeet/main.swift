@@ -1,14 +1,13 @@
 import AppKit
 import ServiceManagement
-import Sparkle
 import SwiftUI
 import Translation
 
-/// `Parakeet <command>` talks to the running app over distributed notifications.
+/// `LiveCaptioner <command>` talks to the running app over distributed notifications.
 enum Control {
-    static let command = Notification.Name("plus.lost.parakeet.command")
-    static let reply = Notification.Name("plus.lost.parakeet.status")
-    static let usage = "usage: Parakeet status | captions on|off"
+    static let command = Notification.Name("io.github.hellolindo.livecaptioner.command")
+    static let reply = Notification.Name("io.github.hellolindo.livecaptioner.status")
+    static let usage = "usage: LiveCaptioner status | captions on|off"
 }
 
 /// Which speech model to run: the default Nemotron streaming ASR, or
@@ -40,6 +39,7 @@ enum EngineKind: String {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let captions = Captions()
     private let translator = Translator()
+    private let captionFontMenu = CaptionFontMenu()
     private lazy var panel = CaptionPanel(captions: captions, translator: translator,
                                           onClose: { [weak self] in self?.stopListening() },
                                           onCopy: { [weak self] in self?.copyTranscript() })
@@ -51,7 +51,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let supported = await LanguageAvailability().supportedLanguages
         return supported.first { $0.isSame(as: Locale.current.language) } ?? Locale.Language(identifier: "en")
     }
-    private lazy var updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
     private var engine: Engine?
     private var onboarding: Onboarding?   // set while the first-launch window is open
     private var onboardingWindow: OnboardingWindow?
@@ -60,11 +59,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var listening = false
     private var rehearse = false
 
-    /// What the menu and `Parakeet status` show; a revoked permission explains
+    /// What the menu and `LiveCaptioner status` show; a revoked permission explains
     /// why nothing is being captioned.
     private var statusLine: String {
         listening && AudioPermission.status == .denied
-            ? String(localized: "Audio access is off. Open System Settings and turn on Parakeet.") : status
+            ? String(localized: "Audio access is off. Open System Settings and turn on Live Captioner.") : status
     }
 
     private var engineTag: String {
@@ -73,14 +72,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         signal(SIGPIPE, SIG_IGN)
-        // Sparkle's own schedule checks at most daily and skips the first launch;
-        // also check on every launch, right after the updater starts (as Sparkle advises).
-        if updater.updater.automaticallyChecksForUpdates { updater.updater.checkForUpdatesInBackground() }
         let menu = NSMenu()
         menu.delegate = self
         statusItem.menu = menu
         updateIcon()
-        // `open Parakeet.app --args --rehearse-first-launch` replays what a new user sees.
+        // `open build/LiveCaptioner.app --args --rehearse-first-launch` replays what a new user sees.
         rehearse = CommandLine.arguments.contains("--rehearse-first-launch")
         if rehearse || !UserDefaults.standard.bool(forKey: "onboarded") { showOnboarding() }
         startEngine()
@@ -108,7 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let window = OnboardingWindow(onboarding)
         onboarding.onFinish = { [weak self] in self?.finishOnboarding() }
         onboarding.onRetry = { [weak self] in self?.startEngine() }
-        // If macOS quits and reopens Parakeet to apply Screen Recording, it comes back set up.
+        // If macOS quits and reopens Live Captioner to apply Screen Recording, it comes back set up.
         // (Open at Login waits for the page that shows its switch.)
         onboarding.onScreenRecording = { [rehearse] in if !rehearse { UserDefaults.standard.set(true, forKey: "onboarded") } }
         self.onboarding = onboarding
@@ -158,16 +154,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.state = language?.minimalIdentifier == translator.target?.minimalIdentifier ? .on : .off
         }
         menu.setSubmenu(translate, for: menu.addItem(withTitle: String(localized: "Translate To"), action: nil, keyEquivalent: ""))
+        menu.setSubmenu(captionFontMenu.makeMenu(), for: menu.addItem(withTitle: String(localized: "Caption Font Size"), action: nil, keyEquivalent: ""))
         let screen = menu.addItem(withTitle: String(localized: "Translate Screen"), action: #selector(SnapTranslate.start), keyEquivalent: "1")
         screen.keyEquivalentModifierMask = [.command, .shift]
         screen.target = snap
         menu.addItem(.separator())
         let login = menu.addItem(withTitle: String(localized: "Open at Login"), action: #selector(toggleOpenAtLogin), keyEquivalent: "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
-        let update = menu.addItem(withTitle: String(localized: "Check for Updates…"), action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "")
-        update.target = updater
         menu.addItem(.separator())
-        menu.addItem(withTitle: String(localized: "Quit Parakeet"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: String(localized: "Quit Live Captioner"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     }
 
     private func handle(_ event: EngineEvent) {
@@ -273,25 +268,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func updateIcon() {
         let name = listening ? "captions.bubble.fill" : "captions.bubble"
-        statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "Parakeet")
-    }
-}
-
-extension AppDelegate: SPUStandardUserDriverDelegate {
-    // A menu bar app is never the active app, so Sparkle would leave an update it
-    // found waiting behind other windows. Bring it to the front instead.
-    var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    func standardUserDriverShouldHandleShowingScheduledUpdate(_ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool {
-        immediateFocus
-    }
-
-    func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
-        guard !handleShowingUpdate else { return }
-        DispatchQueue.main.async { [self] in
-            NSApp.activate()
-            updater.checkForUpdates(nil)
-        }
+        statusItem.button?.image = NSImage(systemSymbolName: name, accessibilityDescription: "Live Captioner")
     }
 }
 
@@ -312,11 +289,11 @@ if let first = commands.first, ["status", "captions"].contains(first) {
         exit(0)
     }
     DistributedNotificationCenter.default().postNotificationName(Control.command, object: command, userInfo: nil, deliverImmediately: true)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { print("Parakeet isn't running"); exit(1) }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { print("Live Captioner isn't running"); exit(1) }
     RunLoop.main.run()
 }
 
-// `Parakeet --bench file.wav` plays a 16 kHz float32 WAV into the engine in
+// `LiveCaptioner --bench file.wav` plays a 16 kHz float32 WAV into the engine in
 // real time and prints what it heard and the CPU time it took.
 if commands.count == 2, commands[0] == "--bench" {
     let data = try! Data(contentsOf: URL(fileURLWithPath: commands[1]))
@@ -371,7 +348,7 @@ if commands.count == 2, commands[0] == "--bench" {
     RunLoop.main.run()
 }
 
-// `Parakeet --snap in.png out.png [language]` reads and translates an image
+// `LiveCaptioner --snap in.png out.png [language]` reads and translates an image
 // as ⇧⌘1 does the screen, and writes it out with every translation laid in.
 if commands.count >= 3, commands[0] == "--snap" {
     guard let source = NSImage(contentsOfFile: commands[1])?.cgImage(forProposedRect: nil, context: nil, hints: nil) else {

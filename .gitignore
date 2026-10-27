@@ -2,3 +2,7 @@
 build/
 app/.build/
 .DS_Store
+
+# Local planning and review notes
+/ROADMAP.md
+/SECURITY_REVIEW.md

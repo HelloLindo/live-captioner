@@ -1,16 +1,29 @@
 #!/bin/sh
-# Packs build/Parakeet.app into build/Parakeet.dmg with DMGMaker
-# (https://github.com/saihgupr/DMGMaker, pinned) and our background.
-# Packaging/DMGMaker-v1.0.3.patch adds the --background option, as in Markfops.
+# Package the built app using macOS tools; no third-party packaging download.
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
-tool="$root/build/dmgtool"
-if [ ! -d "$tool" ]; then
-    git clone -q --depth 1 --branch v1.0.3 https://github.com/saihgupr/DMGMaker "$tool" 2>/dev/null
-    git -C "$tool" apply --unidiff-zero "$root/Packaging/DMGMaker-v1.0.3.patch"
+build_dir=${BUILD_DIR:-"$root/build"}
+app="$build_dir/LiveCaptioner.app"
+
+if [ ! -f "$app/Contents/Info.plist" ] || [ ! -x "$app/Contents/MacOS/LiveCaptioner" ]; then
+    echo "Build the app first with scripts/build-app.sh." >&2
+    exit 1
 fi
-rm -f "$root/build/Parakeet.dmg"
-(cd "$tool" && swift run -c release "DMG Maker" --app "$root/build/Parakeet.app" --name Parakeet \
-    --background "$root/Packaging/DMGBackground.png")
-test -f "$root/build/Parakeet.dmg"
-echo "$root/build/Parakeet.dmg"
+codesign --verify --deep --strict "$app"
+
+work=$(mktemp -d "$build_dir/dmg.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+mkdir "$work/contents"
+# Keep local extended attributes and quarantine metadata out of the payload.
+ditto --norsrc --noextattr --noqtn "$app" "$work/contents/LiveCaptioner.app"
+codesign --verify --deep --strict "$work/contents/LiveCaptioner.app"
+ln -s /Applications "$work/contents/Applications"
+cp "$root/Packaging/Installation.txt" "$work/contents/Installation.txt"
+
+hdiutil create -volname "Live Captioner" -srcfolder "$work/contents" \
+    -fs HFS+ -format UDZO -imagekey zlib-level=9 "$work/LiveCaptioner.dmg"
+hdiutil verify "$work/LiveCaptioner.dmg"
+mv -f "$work/LiveCaptioner.dmg" "$build_dir/LiveCaptioner.dmg"
+(cd "$build_dir" && shasum -a 256 LiveCaptioner.dmg > LiveCaptioner.dmg.sha256)
+echo "$build_dir/LiveCaptioner.dmg"

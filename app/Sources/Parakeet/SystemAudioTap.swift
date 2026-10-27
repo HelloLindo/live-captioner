@@ -7,7 +7,7 @@ final class SystemAudioTap {
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var procID: AudioDeviceIOProcID?
-    private let queue = DispatchQueue(label: "parakeet.tap", qos: .userInitiated)
+    private let queue = DispatchQueue(label: "io.github.hellolindo.livecaptioner.tap", qos: .userInitiated)
 
     func start(onAudio: @escaping (Data) -> Void) throws {
         // A running tap would otherwise keep the Mac from idle-sleeping.
@@ -23,7 +23,7 @@ final class SystemAudioTap {
 
         let outputUID = try defaultOutputUID()
         let aggregate: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "Parakeet Tap",
+            kAudioAggregateDeviceNameKey: "Live Captioner Tap",
             kAudioAggregateDeviceUIDKey: UUID().uuidString,
             kAudioAggregateDeviceMainSubDeviceKey: outputUID,
             kAudioAggregateDeviceIsPrivateKey: true,
