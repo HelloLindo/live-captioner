@@ -1,12 +1,12 @@
 #!/bin/sh
 # Builds build/LiveCaptioner.app (Apple silicon, macOS 15+).
-# FORK_VERSION defaults to 0.1.0; the build number is the commit count.
+# FORK_VERSION defaults to 0.1.1; the build number is the commit count.
 # Uses SIGN_IDENTITY, an available Developer ID, or ad-hoc signing.
 set -eu
 root=$(cd "$(dirname "$0")/.." && pwd)
 build_dir=${BUILD_DIR:-"$root/build"}
 app="$build_dir/LiveCaptioner.app"
-version=${FORK_VERSION:-0.1.0}
+version=${FORK_VERSION:-0.1.1}
 build=$(git -C "$root" rev-list --count HEAD)
 identities=$(security find-identity -p codesigning)
 identity=${SIGN_IDENTITY:-$(echo "$identities" | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)}

@@ -14,6 +14,10 @@ the original version that makes this project possible.
 [Install](#install) · [Using captions](#using-captions) ·
 [Source](https://github.com/HelloLindo/live-captioner)
 
+**Latest release: [v0.1.1](https://github.com/HelloLindo/live-captioner/releases/tag/v0.1.1)**
+adds independent Disabled options for original and translated captions.
+See the [changelog](CHANGELOG.md) for version details.
+
 ![Upstream demo showing captions and Korean translation in QuickTime Player](docs/screenshot.jpg)
 
 *Demo image from the original Parakeet app. Live Captioner adds its own branding
